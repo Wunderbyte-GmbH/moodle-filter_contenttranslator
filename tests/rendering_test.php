@@ -134,11 +134,19 @@ final class rendering_test extends \advanced_testcase {
         [, , , $filter] = $this->translated_page($mlang);
         $this->assertSame($mlang, $this->render($filter, $mlang, 'de'));
 
-        // When translated anyway, {mlang} blocks are protected (ENG-12) and reach the page unchanged.
+        // When translated anyway, {mlang} blocks are protected (ENG-12). Content that is nothing but {mlang}
+        // has no text of its own: it reaches the page unchanged and is not marked as translated.
         set_config('skipmultilang', 0, 'local_contenttranslator');
         $out = $this->render($filter, $mlang, 'de');
+        $this->assertStringNotContainsString('ct-translated', $out);
+        $this->assertStringContainsString($mlang, $out);
+
+        // Text around the blocks is translated, the blocks themselves stay intact.
+        $mixed = '<p>Greeting: {mlang en}Hello{mlang}{mlang de}Hallo{mlang}</p>';
+        [, , , $filter] = $this->translated_page($mixed);
+        $out = $this->render($filter, $mixed, 'de');
         $this->assertStringContainsString('ct-translated', $out);
-        $this->assertStringContainsString('{mlang de}Hallo{mlang}', $out);
+        $this->assertStringContainsString('{mlang en}Hello{mlang}{mlang de}Hallo{mlang}', $out);
     }
 
     /**
