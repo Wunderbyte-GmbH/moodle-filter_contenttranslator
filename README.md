@@ -9,7 +9,7 @@ registered content with the stored translation for the current user's language.
   and the "show stale" setting.
 * Adds `lang` attributes, an optional "machine translated" indicator (per block or one banner per page)
   and a "show original" toggle.
-* Works for `format_text()` and `format_string()` output (enable *Filter all strings*).
+* Works for `format_text()` and `format_string()` output (set *Apply to* to *Content and headings*).
 
 Enable the filter and move it to the top of the filter order so it sees the untouched source text.
 

@@ -7,7 +7,7 @@
 ## Quick setup path
 
 1. [/admin/filters.php](/admin/filters.php): set **Content translator** to *On* and move it to the top.
-2. [/admin/search.php?query=filterall](/admin/search.php?query=filterall): enable *Filter all strings*.
+2. On the same page set *Apply to* to *Content and headings*.
 3. Check *Reports → System status → Content translator setup*.
 
 ---
@@ -25,7 +25,7 @@
 
 The filter must run **first** so that it sees the untouched source text before multilang, glossary
 auto-linking or emoticon filters change it. Course, section and activity names only pass through
-filters when *Filter all strings* is on.
+filters whose *Apply to* setting is *Content and headings*.
 
 ## 2. What learners see
 
