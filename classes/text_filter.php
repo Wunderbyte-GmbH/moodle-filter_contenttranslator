@@ -34,6 +34,9 @@ class text_filter extends \core_filters\text_filter {
     /** @var bool Whether the "show original" banner was already requested for this page */
     private static bool $bannerdone = false;
 
+    /** @var int Number of times request_banner() was called this page (tests) */
+    private static int $bannerrequests = 0;
+
     /** @var bool|null Session toggle cache */
     private static ?bool $showoriginal = null;
 
@@ -44,7 +47,7 @@ class text_filter extends \core_filters\text_filter {
             return;
         }
         $param = optional_param('ctoriginal', null, PARAM_INT);
-        if ($param !== null) {
+        if ($param !== null && has_capability('local/contenttranslator:showoriginal', $context)) {
             $SESSION->filter_contenttranslator_original = (bool)$param;
         }
         self::$showoriginal = !empty($SESSION->filter_contenttranslator_original);
@@ -68,7 +71,17 @@ class text_filter extends \core_filters\text_filter {
      */
     public static function reset(): void {
         self::$bannerdone = false;
+        self::$bannerrequests = 0;
         self::$showoriginal = null;
+    }
+
+    /**
+     * Number of times the banner was requested this page (tests only).
+     *
+     * @return int
+     */
+    public static function banner_request_count(): int {
+        return self::$bannerrequests;
     }
 
     #[\Override]
@@ -122,7 +135,6 @@ class text_filter extends \core_filters\text_filter {
         if (!$result || !$result['found']) {
             return $text;
         }
-        $this->request_banner($result);
         if (self::show_original()) {
             return $text;
         }
@@ -137,6 +149,7 @@ class text_filter extends \core_filters\text_filter {
      */
     private function request_banner(array $result): void {
         global $PAGE;
+        self::$bannerrequests++;
         if (self::$bannerdone || !isset($PAGE) || !$PAGE->has_set_url() || CLI_SCRIPT || AJAX_SCRIPT || WS_SERVER) {
             return;
         }
@@ -153,7 +166,7 @@ class text_filter extends \core_filters\text_filter {
                 ? get_string('showingoriginal', 'filter_contenttranslator')
                 : get_string('machinetranslated_page', 'filter_contenttranslator'));
         }
-        if ($toggle) {
+        if ($toggle && has_capability('local/contenttranslator:showoriginal', $this->context)) {
             $url = new \moodle_url($PAGE->url, ['ctoriginal' => self::show_original() ? 0 : 1]);
             $parts[] = \html_writer::link($url, self::show_original()
                 ? get_string('showtranslation', 'filter_contenttranslator')

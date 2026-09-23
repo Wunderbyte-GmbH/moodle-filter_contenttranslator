@@ -226,6 +226,53 @@ final class rendering_test extends \advanced_testcase {
     }
 
     /**
+     * The "show original" toggle is only offered when real content was translated (filter()); a course or
+     * activity name matching alone (filter_stage_string()) must not raise it, or it would appear on pages
+     * with nothing translatable of their own, such as the site administration (GH-2387 follow-up).
+     */
+    public function test_banner_only_for_content(): void {
+        global $SESSION;
+        $course = $this->getDataGenerator()->create_course();
+        $page = $this->getDataGenerator()->create_module('page', [
+            'course' => $course->id, 'name' => 'Page name', 'content' => '<p>Body text</p>',
+        ]);
+        item_manager::sync_course((int)$course->id);
+        $contentitem = item_manager::find('mod_page', 'page', 'content', (int)$page->id);
+        $nameitem = item_manager::find('mod_page', 'page', 'name', (int)$page->id);
+        translator::translate_item($contentitem, 'de', budget::TRIGGER_BULK, 2);
+        translator::translate_item($nameitem, 'de', budget::TRIGGER_BULK, 2);
+        $filter = new text_filter(\context_module::instance($page->cmid), []);
+
+        text_filter::reset();
+        $this->render($filter, '<p>Body text</p>', 'de');
+        $this->assertSame(1, text_filter::banner_request_count(), 'Translated content requests the banner');
+
+        text_filter::reset();
+        $SESSION->forcelang = 'de';
+        $filter->filter_stage_string('Page name', []);
+        $this->assertSame(0, text_filter::banner_request_count(), 'A translated name alone does not');
+    }
+
+    /**
+     * Without the capability, a user cannot switch to the source text even via the ctoriginal URL parameter
+     * (GH-2387 follow-up): the button is not just hidden, the action itself is blocked.
+     */
+    public function test_showoriginal_requires_capability(): void {
+        global $PAGE, $SESSION;
+        [, $page, , $filter] = $this->translated_page();
+        $context = \context_module::instance($page->cmid);
+        $this->setUser($this->getDataGenerator()->create_user());
+
+        $_GET['ctoriginal'] = 1;
+        text_filter::reset();
+        $filter->setup($PAGE, $context);
+        unset($_GET['ctoriginal']);
+
+        $this->assertTrue(empty($SESSION->filter_contenttranslator_original), 'No capability, no toggle via URL');
+        $this->assertStringContainsString('[de]', $this->render($filter, '<p>Body text</p>', 'de'));
+    }
+
+    /**
      * Guests and visitors see translations too (WB-10).
      */
     public function test_guest(): void {
