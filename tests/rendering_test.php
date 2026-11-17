@@ -273,6 +273,26 @@ final class rendering_test extends \advanced_testcase {
     }
 
     /**
+     * The first setup() on a page comes from the globally available filters with the system context; a
+     * student who holds the capability in the course must still be able to switch to the original (GH-6).
+     */
+    public function test_showoriginal_setup_with_system_context(): void {
+        global $PAGE, $SESSION;
+        [$course, $page, , $filter] = $this->translated_page();
+        $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        $this->setUser($student);
+        $PAGE->set_context(\context_module::instance($page->cmid));
+
+        $_GET['ctoriginal'] = 1;
+        text_filter::reset();
+        $filter->setup($PAGE, \context_system::instance());
+        unset($_GET['ctoriginal']);
+
+        $this->assertTrue($SESSION->filter_contenttranslator_original, 'Capability in the page context is enough');
+        $this->assertStringNotContainsString('[de]', $this->render($filter, '<p>Body text</p>', 'de'));
+    }
+
+    /**
      * Guests and visitors see translations too (WB-10).
      */
     public function test_guest(): void {

@@ -47,7 +47,7 @@ class text_filter extends \core_filters\text_filter {
             return;
         }
         $param = optional_param('ctoriginal', null, PARAM_INT);
-        if ($param !== null && has_capability('local/contenttranslator:showoriginal', $context)) {
+        if ($param !== null && self::can_toggle($page, $context)) {
             $SESSION->filter_contenttranslator_original = (bool)$param;
         }
         self::$showoriginal = !empty($SESSION->filter_contenttranslator_original);
@@ -64,6 +64,25 @@ class text_filter extends \core_filters\text_filter {
             self::$showoriginal = !empty($SESSION->filter_contenttranslator_original);
         }
         return self::$showoriginal;
+    }
+
+    /**
+     * Whether the current user may switch between translation and original here.
+     *
+     * Globally available filters are set up with the system context before anything else on
+     * the page, while the toggle link is rendered for the context of the content (course or
+     * module, where students and guests hold the capability). Both are accepted.
+     *
+     * @param mixed $page The page (moodle_page) or null.
+     * @param \context $context Context the filter was set up with.
+     * @return bool
+     */
+    private static function can_toggle($page, \context $context): bool {
+        $capability = 'local/contenttranslator:showoriginal';
+        if (has_capability($capability, $context)) {
+            return true;
+        }
+        return $page instanceof \moodle_page && has_capability($capability, $page->context);
     }
 
     /**
