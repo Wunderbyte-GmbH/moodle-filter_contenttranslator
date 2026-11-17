@@ -25,9 +25,9 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'filter_contenttranslator';
-$plugin->version = 2026091100;
+$plugin->version = 2026111700;
 $plugin->requires = 2024100700; // Moodle 4.5.
-$plugin->supported = [405, 502];
+$plugin->supported = [405, 503];
 $plugin->maturity = MATURITY_ALPHA;
 $plugin->release = '0.1.0';
 $plugin->dependencies = ['local_contenttranslator' => ANY_VERSION];
